@@ -3,6 +3,10 @@ from xml.etree.ElementTree import Comment
 from django import forms
 from django.core.exceptions import ValidationError
 
+from django.forms import ValidationError
+from django.conf import settings
+import requests
+
 from .models import Listing, Bid, Comment
 
 class ListingForm(forms.ModelForm):
@@ -15,13 +19,16 @@ class ListingForm(forms.ModelForm):
         }
 
 class BidForm(forms.ModelForm):
-
     class Meta:
         model = Bid
         fields = ('amount', ) 
         labels = {
             'amount': "Amount of bid (in USD)",
         }
+    
+    ###ADD THIS###
+    recaptcha = forms.CharField(widget=forms.HiddenInput())
+    ##############
 
     def set_minimum_bid(self, value):
         self.minimum_bid = value

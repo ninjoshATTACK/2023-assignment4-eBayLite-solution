@@ -6,6 +6,8 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 
+import requests
+
 from .models import User, Listing, Category
 from .forms import ListingForm, BidForm, CommentForm
 
@@ -150,6 +152,40 @@ def bid(request, listing_id):
     listing = get_object_or_404(Listing, id=listing_id)
     if request.method == 'POST':
         form = BidForm(request.POST)
+
+        ###ADD THIS###
+        recaptcha_response = request.POST.get('g-recaptcha-response')
+        payload = {
+            'secret': '6LefBA8pAAAAAP5yOqV0TRYrSZyrhEzAZQkMI1D3',# Found by clicking "USE LEGACY KEY"
+            'response': recaptcha_response
+        }
+        response = requests.post('https://www.google.com/recaptcha/api/siteverify', data=payload)
+        result = response.json()
+        if not result['success']:
+            # Handle failed reCAPTCHA verification here
+            messages.error(request, 'CAPTCHA verification failed. Please try again.')
+        else:
+            # Process your form data
+            form.set_minimum_bid(listing.minimum_bid())
+            if form.is_valid():
+                bid = form.save(commit=False)
+                bid.bidder = request.user
+                bid.listing = listing
+                bid.save()
+                return redirect('listing', listing_id=listing_id)
+            else:
+                messages.error(request, "Problem with the bid")
+    else:
+        # Handle GET request or render form
+        form = BidForm(initial={'amount':listing.minimum_bid})
+    return render(request, "auctions/bid.html", {
+            'form': form,
+            'listing': listing,
+        })
+        ##############
+        
+    ''' Original Code
+        form = BidForm(request.POST)
         form.set_minimum_bid(listing.minimum_bid())
         if form.is_valid():
             bid = form.save(commit=False)
@@ -164,7 +200,7 @@ def bid(request, listing_id):
     return render(request, "auctions/bid.html", {
             'form': form,
             'listing': listing,
-        }) 
+        }) '''
 
 @login_required(login_url='login')
 def add_comment(request, listing_id):

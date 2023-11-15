@@ -1,6 +1,8 @@
 
 {% extends "auctions/layout.html" %}
 
+
+
 {% block main %}
 
 {% for m in messages %}
@@ -13,6 +15,13 @@
 <form action="{% url 'bid' listing.id %}" method="POST">
     {% csrf_token %}
     {{ form.as_table }}
+    
+    <!--ADD THIS-->
+    <div class="g-recaptcha" data-sitekey="6LefBA8pAAAAAPYePXT1H3Gw1a4bylGJl9qhiWh7"
+    data-theme="light" data-size="normal"></div>
+    <br/>
+    <!------------>
+
     <button type="submit" name="doit" value="bid">Place Bid</button>
 </form>
 {% endblock %}
